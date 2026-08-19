@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxUnavailable: 0, maxSurge: 1}
+  template:
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: workload-type
+                    operator: In
+                    values: [worker, storage]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio
+spec:
+  template:
+    spec:
+      containers:
+        - name: minio
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: backend-prod-secrets
+                  key: minio-access-key
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: backend-prod-secrets
+                  key: minio-secret-key
+      volumes:
+        - name: data
+          hostPath:
+            path: /mnt/hdd/minio-prod
+            type: DirectoryOrCreate
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: seaweedfs
+spec:
+  template:
+    spec:
+      volumes:
+        - name: data
+          hostPath:
+            path: /mnt/hdd/seaweedfs-prod
+            type: DirectoryOrCreate
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  template:
+    spec:
+      volumes:
+        - name: data
+          hostPath:
+            path: /mnt/ssd/postgres-prod
+            type: DirectoryOrCreate
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+spec:
+  template:
+    spec:
+      volumes:
+        - name: data
+          hostPath:
+            path: /mnt/ssd/redis-prod
+            type: DirectoryOrCreate
+---
+
+
+

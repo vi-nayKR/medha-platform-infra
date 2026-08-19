@@ -1,0 +1,12 @@
+[Unit]
+Description=Medha private-LAN service firewall
+After=network-pre.target
+Before=medha-worker.service medha-storage.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/medha-firewall-apply
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

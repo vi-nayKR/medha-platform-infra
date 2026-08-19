@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: dev
+resources:
+  - namespace.yaml
+  - ../../base
+  - backend-sealed-secret.yaml
+  - postgres-sealed-secret.yaml
+  - seaweedfs-sealed-secret.yaml
+  - ingress.yaml
+configMapGenerator:
+  - name: backend-config
+    literals:
+      - SERVER_PORT=8080
+      - ENVIRONMENT=development
+      - LOG_LEVEL=debug
+      - REDIS_URL=redis://redis:6379/0
+      - S3_ENDPOINT=seaweedfs:8333
+      - S3_PUBLIC_ENDPOINT=https://s3-dev.medha.dev
+      - SHARE_BASE_URL=https://dev.medha.dev
+      - RESEND_FROM_DOMAIN=support.medha.dev
+      - MESSAGECENTRAL_BASE_URL=https://cpaas.messagecentral.com
+      - JWT_PRIVATE_KEY_PATH=/app/keys/jwt_private.pem
+      - JWT_PUBLIC_KEY_PATH=/app/keys/jwt_public.pem
+      - JWT_EXPIRY_MINUTES=15
+      - SWAGGER_ENABLED=true
+  - name: minio-config
+    literals:
+      - MINIO_SERVER_URL=https://s3-dev.medha.dev
+      - MINIO_BROWSER_REDIRECT_URL=https://minio-dev.medha.dev
+generatorOptions:
+  disableNameSuffixHash: true
+images:
+  - name: local-registry:5000/medha-api
+    newName: local-registry:5000/medha-api-dev
+    newTag: cf75ee8b042396664fc57004ddd027c3c005107d
+patches:
+  - path: workload-patch.yaml
+  - path: secret-refs-patch.yaml

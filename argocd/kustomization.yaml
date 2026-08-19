@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - medha-platform.yaml
+  - medha-dev.yaml
+  - medha-prod.yaml
+  - medha-web-dev.yaml
+  - medha-web-prod.yaml
+  - medha-admin-panel-dev.yaml
+  - medha-admin-panel-prod.yaml
+
+

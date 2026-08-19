@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: medha-dev
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/vi-nayKR/medha-platform-infra.git
+    targetRevision: main
+    path: kubernetes/overlays/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dev
+  syncPolicy:
+    automated: {prune: true, selfHeal: true}
+    syncOptions: [CreateNamespace=true, PruneLast=true]
+

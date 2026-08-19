@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: local-registry
+  namespace: kube-system
+  labels:
+    app: local-registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: local-registry
+  template:
+    metadata:
+      labels:
+        app: local-registry
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: medha-worker-node
+      tolerations:
+      - operator: Exists
+      containers:
+      - name: registry
+        image: registry:2
+        ports:
+        - name: registry
+          containerPort: 5000
+          hostPort: 5000
+          protocol: TCP
+        env:
+        - name: REGISTRY_STORAGE_DELETE_ENABLED
+          value: "true"
+        volumeMounts:
+        - name: registry-data
+          mountPath: /var/lib/registry
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+      volumes:
+      - name: registry-data
+        hostPath:
+          path: /var/lib/k3s-registry
+          type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: local-registry
+  namespace: kube-system
+spec:
+  selector:
+    app: local-registry
+  ports:
+  - port: 5000
+    targetPort: 5000
+    protocol: TCP

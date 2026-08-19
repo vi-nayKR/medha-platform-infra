@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    spec:
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio
+spec:
+  template:
+    spec:
+      containers:
+        - name: minio
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: backend-dev-secrets
+                  key: minio-access-key
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: backend-dev-secrets
+                  key: minio-secret-key
+      volumes:
+        - name: data
+          hostPath:
+            path: /mnt/hdd/minio-dev
+            type: DirectoryOrCreate
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: seaweedfs
+spec:
+  template:
+    spec:
+      volumes:
+        - name: data
+          hostPath:
+            path: /mnt/hdd/seaweedfs-dev
+            type: DirectoryOrCreate
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  template:
+    spec:
+      volumes:
+        - name: data
+          hostPath:
+            path: /mnt/ssd/postgres-dev
+            type: DirectoryOrCreate
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+spec:
+  template:
+    spec:
+      volumes:
+        - name: data
+          hostPath:
+            path: /mnt/ssd/redis-dev
+            type: DirectoryOrCreate
+---
+
+
+

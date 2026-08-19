@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: seaweedfs
+spec:
+  selector:
+    app.kubernetes.io/name: seaweedfs
+  ports:
+    - name: s3
+      port: 8333
+      targetPort: s3
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: seaweedfs
+spec:
+  serviceName: seaweedfs-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: seaweedfs
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: seaweedfs
+    spec:
+      nodeSelector:
+        workload-type: storage
+      securityContext:
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: seaweedfs
+          image: chrislusf/seaweedfs:4.41
+          args:
+            - server
+            - -dir=/data
+            - -s3
+            - -s3.port=8333
+            - -s3.config=/etc/seaweedfs/s3_identity.json
+            - -master.port=9333
+            - -volume.port=8080
+            - -filer.port=8888
+          ports:
+            - {name: s3, containerPort: 8333}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: s3-identity
+              mountPath: /etc/seaweedfs
+              readOnly: true
+          readinessProbe:
+            tcpSocket: {port: s3}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              # The image's entrypoint chowns /data to uid/gid 1000 then
+              # su-exec's down to that user on every start (hostPath volumes
+              # aren't fixed up by the pod-level fsGroup the way real PVs
+              # are). CHOWN/SETUID/SETGID are required for that; dropping
+              # them (matching MinIO's stricter profile) crash-loops this
+              # image specifically.
+              add: ["CHOWN", "SETUID", "SETGID"]
+          resources:
+            requests: {cpu: 200m, memory: 512Mi}
+            limits: {cpu: "1", memory: 2Gi}
+      volumes:
+        # Path is placeholder; each overlay patches it to the environment's
+        # data directory. Not an in-place adopt of the old MinIO hostPath —
+        # SeaweedFS uses a different on-disk format, data is migrated via the
+        # S3 API (mc mirror), not by pointing at the old directory.
+        - name: data
+          hostPath:
+            path: /mnt/hdd/seaweedfs
+            type: DirectoryOrCreate
+        - name: s3-identity
+          secret:
+            secretName: seaweedfs-secrets
+            items:
+              - key: s3-identity-config
+                path: s3_identity.json
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: seaweedfs-headless
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector:
+    app.kubernetes.io/name: seaweedfs
+  ports:
+    - name: s3
+      port: 8333

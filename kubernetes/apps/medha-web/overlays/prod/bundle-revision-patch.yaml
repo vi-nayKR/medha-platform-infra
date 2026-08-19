@@ -1,0 +1,9 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: medha-web
+spec:
+  template:
+    metadata:
+      annotations:
+        medha.io/web-bundle-revision: "ead07ee958e7286c216a1c8c2c8d795ba1bf4ede"

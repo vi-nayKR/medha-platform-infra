@@ -1,0 +1,8 @@
+account_id   = "replace-with-cloudflare-account-id"
+zone_id      = "replace-with-medhainnovation-zone-id"
+access_emails = [
+  "operator@example.com",
+]
+
+# Supply through TF_VAR_cloudflare_api_token; never commit it here.
+

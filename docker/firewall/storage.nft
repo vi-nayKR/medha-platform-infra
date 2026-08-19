@@ -1,0 +1,8 @@
+table inet medha_storage {
+  chain input {
+    type filter hook input priority -5; policy accept;
+    iifname "lo" accept
+    ip saddr 10.0.0.10 tcp dport { 8333, 8334 } accept
+    tcp dport { 8333, 8334, 8888, 8889, 9333, 9334, 18080, 18081, 18333, 18334, 18888, 18889, 19333, 19334, 28080, 28081 } drop
+  }
+}

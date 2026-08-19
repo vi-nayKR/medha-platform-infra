@@ -1,0 +1,17 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: medha-security-headers
+  namespace: kube-system
+spec:
+  headers:
+    contentTypeNosniff: true
+    frameDeny: true
+    referrerPolicy: strict-origin-when-cross-origin
+    permissionsPolicy: camera=(), microphone=(), geolocation=(self)
+    stsSeconds: 31536000
+    stsIncludeSubdomains: true
+    stsPreload: true
+    # Cloudflare Tunnel terminates TLS before forwarding HTTP to Traefik.
+    # Emit HSTS even though the origin-side request is HTTP.
+    forceSTSHeader: true

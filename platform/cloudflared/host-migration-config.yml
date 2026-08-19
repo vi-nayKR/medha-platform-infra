@@ -1,0 +1,34 @@
+# Transitional /etc/cloudflared/config.yml for the existing locally configured
+# tunnel, currently running on medha-storage. Keep dev routed to the API only
+# until all clients use api-dev; then delete the dev rule and attach
+# dev.medha.dev to the web Worker. The catch-all rule must remain last.
+tunnel: bba72ac3-3cdb-4d95-9bbf-f1884f4b79e9
+credentials-file: /etc/cloudflared/bba72ac3-3cdb-4d95-9bbf-f1884f4b79e9.json
+ingress:
+  - hostname: api.medha.dev
+    service: http://localhost:80
+  - hostname: dev.medha.dev
+    service: http://localhost:80
+  - hostname: admin.medha.dev
+    service: http://localhost:80
+  - hostname: api-dev.medha.dev
+    service: http://localhost:80
+  - hostname: s3.medha.dev
+    service: http://localhost:80
+  - hostname: s3-dev.medha.dev
+    service: http://localhost:80
+  - hostname: minio.medha.dev
+    service: http://localhost:80
+  - hostname: minio-console.medha.dev
+    service: http://localhost:80
+  - hostname: minio-dev.medha.dev
+    service: http://localhost:80
+  - hostname: minio-console-dev.medha.dev
+    service: http://localhost:80
+  - hostname: ssh-master.medha.dev
+    service: ssh://10.0.0.2:22
+  - hostname: ssh-worker.medha.dev
+    service: ssh://10.0.0.10:22
+  - hostname: ssh-storage.medha.dev
+    service: ssh://localhost:22
+  - service: http_status:404

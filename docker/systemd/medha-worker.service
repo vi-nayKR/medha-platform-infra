@@ -1,0 +1,26 @@
+[Unit]
+Description=Medha worker role (API, PostgreSQL, Redis)
+Requires=docker.service
+After=docker.service network-online.target medha-firewall.service
+Wants=network-online.target medha-firewall.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+TimeoutStopSec=120
+ExecStartPre=-/usr/bin/docker rm -f medha-worker
+ExecStart=/usr/bin/docker run --name medha-worker --network host \
+  --env MEDHA_ROLE=worker --env MEDHA_STORAGE_HOST=10.0.0.20 \
+  --mount type=bind,src=/opt/medha/config,dst=/opt/medha/config,readonly \
+  --mount type=bind,src=/opt/medha/config/jwt-keys,dst=/opt/medha/keys,readonly \
+  --mount type=bind,src=/opt/medha/data/postgres-dev,dst=/data/postgres-dev \
+  --mount type=bind,src=/opt/medha/data/postgres-prod,dst=/data/postgres-prod \
+  --mount type=bind,src=/opt/medha/data/redis-dev,dst=/data/redis-dev \
+  --mount type=bind,src=/opt/medha/data/redis-prod,dst=/data/redis-prod \
+  --mount type=bind,src=/opt/medha/logs,dst=/data/logs \
+  medha-split:20260820.1
+ExecStop=/usr/bin/docker stop --time 90 medha-worker
+
+[Install]
+WantedBy=multi-user.target

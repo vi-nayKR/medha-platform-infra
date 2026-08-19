@@ -1,0 +1,51 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: public
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-medha-security-headers@kubernetescrd
+spec:
+  rules:
+    - host: medha.dev
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: {name: medha-web, port: {number: 80}}
+    - host: www.medha.dev
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: {name: medha-web, port: {number: 80}}
+    - host: admin.medha.dev
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: {name: medha-admin-panel, port: {number: 80}}
+    - host: api.medha.dev
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: {name: backend, port: {number: 8080}}
+    - host: s3.medha.dev
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: {name: seaweedfs, port: {number: 8333}}
+    - host: minio.medha.dev
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: {name: minio, port: {number: 9001}}

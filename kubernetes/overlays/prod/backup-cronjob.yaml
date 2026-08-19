@@ -1,0 +1,89 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: nightly-backup
+spec:
+  schedule: "0 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 3600
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: nightly-backup
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
+          nodeSelector:
+            workload-type: storage
+          containers:
+            - name: postgres-backup
+              image: postgres:17-alpine
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -eu
+                  umask 077
+                  DATE=$(date +%Y%m%d_%H%M%S)
+                  DB_FINAL="/backups/db_backup_$DATE.dump"
+                  DB_TEMP="$DB_FINAL.partial"
+                  MINIO_FINAL="/backups/minio_backup_$DATE.tar.gz"
+                  MINIO_TEMP="$MINIO_FINAL.partial"
+                  trap 'rm -f "$DB_TEMP" "$MINIO_TEMP"' EXIT
+
+                  pg_dump --host=postgres --username="$POSTGRES_USER" \
+                    --dbname="$POSTGRES_DB" --format=custom --file="$DB_TEMP"
+                  test -s "$DB_TEMP"
+                  pg_restore --list "$DB_TEMP" >/dev/null
+                  mv "$DB_TEMP" "$DB_FINAL"
+
+                  tar -czf "$MINIO_TEMP" -C /minio-data .
+                  test -s "$MINIO_TEMP"
+                  gzip -t "$MINIO_TEMP"
+                  mv "$MINIO_TEMP" "$MINIO_FINAL"
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+                runAsNonRoot: true
+                runAsUser: 70
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-secrets
+                      key: POSTGRES_PASSWORD
+                - name: POSTGRES_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-secrets
+                      key: POSTGRES_USER
+                - name: POSTGRES_DB
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-secrets
+                      key: POSTGRES_DB
+              resources:
+                requests: {cpu: 100m, memory: 128Mi}
+                limits: {cpu: 500m, memory: 512Mi}
+              volumeMounts:
+                - name: backup-storage
+                  mountPath: /backups
+                - name: minio-data
+                  mountPath: /minio-data
+                  readOnly: true
+          volumes:
+            - name: backup-storage
+              hostPath:
+                path: /mnt/hdd/backups
+                type: DirectoryOrCreate
+            - name: minio-data
+              hostPath:
+                path: /mnt/hdd/minio-prod
+                type: DirectoryOrCreate

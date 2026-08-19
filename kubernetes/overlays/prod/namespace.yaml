@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prod
+  labels:
+    app.kubernetes.io/part-of: medha
+    medha.innovation/environment: prod
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: prod
+spec:
+  hard:
+    limits.cpu: "5"
+    limits.memory: 10Gi
+    requests.cpu: "4"
+    requests.memory: 8Gi
+

@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  # The production tunnel is host-managed on medha-storage. Keep its
+  # migration reference under platform/cloudflared, but do not deploy a
+  # second Kubernetes tunnel without an in-cluster credential Secret.
+  - registry
+  - traefik

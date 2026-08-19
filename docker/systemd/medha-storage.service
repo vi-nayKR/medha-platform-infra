@@ -1,0 +1,24 @@
+[Unit]
+Description=Medha storage role (SeaweedFS, Nginx, backups)
+Requires=docker.service
+After=docker.service network-online.target medha-firewall.service
+Wants=network-online.target medha-firewall.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+TimeoutStopSec=120
+ExecStartPre=-/usr/bin/docker rm -f medha-storage
+ExecStart=/usr/bin/docker run --name medha-storage --network host \
+  --env MEDHA_ROLE=storage --env MEDHA_WORKER_HOST=10.0.0.10 \
+  --mount type=bind,src=/opt/medha/config-storage,dst=/opt/medha/config,readonly \
+  --mount type=bind,src=/opt/medha/data/seaweedfs-dev,dst=/data/seaweedfs-dev \
+  --mount type=bind,src=/opt/medha/data/seaweedfs-prod,dst=/data/seaweedfs-prod \
+  --mount type=bind,src=/opt/medha/data/backups,dst=/data/backups \
+  --mount type=bind,src=/opt/medha/logs,dst=/data/logs \
+  medha-split:20260820.1
+ExecStop=/usr/bin/docker stop --time 90 medha-storage
+
+[Install]
+WantedBy=multi-user.target
