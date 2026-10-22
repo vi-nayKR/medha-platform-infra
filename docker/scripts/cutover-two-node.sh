@@ -16,6 +16,8 @@ switched_storage=false
 completed=false
 
 worker_ssh() {
+  # Callers pass explicit command arguments from this script; client expansion is intentional.
+  # shellcheck disable=SC2029
   ssh "${ssh_opts[@]}" "$worker" "$@"
 }
 
