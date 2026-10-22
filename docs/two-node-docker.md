@@ -1,5 +1,7 @@
 # Two-node Docker deployment
 
+> **Historical runbook, not a public deployment quickstart.** The state and rollback window below are recorded claims from 2026-08-20, not verified current conditions. The cutover trap must be reviewed for failures after worker writes; do not assume it safely restores consistent state. Public secrets are non-deployable fixtures, and SSH parameters must be supplied privately. See [publication review](PUBLICATION_REVIEW.md).
+
 The active Medha deployment uses two Debian hosts and one pinned container image with distinct
 roles. The Kubernetes manifests remain historical reference and are not applied to these hosts.
 

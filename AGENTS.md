@@ -1,9 +1,11 @@
 # AGENTS.md — Medha Infra
 
-> **Runtime update (2026-08-20):** the active platform is the two-node Docker deployment described
-> in [`docs/two-node-docker.md`](./docs/two-node-docker.md). `medha-storage-node` runs the edge and
-> object-storage role; `medha-worker-node` runs APIs, PostgreSQL, and Redis. The Kubernetes/Argo CD
-> material below is retained as historical configuration and must not be treated as the live
+> **Public snapshot boundary (2026-10-22):** This is an offline reference derivative, not an authorized deployment source. All SealedSecrets contain explicit non-deployable publication sentinels. `scripts/validate.sh` checks publication structure; `scripts/validate-runtime-secrets.sh` must reject this checkout. Do not apply, seal against the historical certificate, sync, migrate, or contact any live host. The operational instructions below are historical reference, not permission. See `docs/PUBLICATION_REVIEW.md`.
+
+> **Historical runtime note (2026-08-20):** a later two-node Docker design is recorded
+> in [`docs/two-node-docker.md`](./docs/two-node-docker.md), separating edge/object storage from
+> APIs, PostgreSQL and Redis. This public snapshot does not verify today's live runtime.
+> The Kubernetes/Argo CD material below is historical configuration, not an authorized
 > deployment workflow.
 
 > **Cross-tool agent guide.** This file is the single source of truth for AI coding agents in

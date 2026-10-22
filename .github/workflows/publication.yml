@@ -1,0 +1,42 @@
+name: Publication reference checks
+
+on:
+  push:
+    branches: [main, 'security/**']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  publication:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - name: Validate publication fixtures and reference structure
+        run: ./scripts/validate.sh
+      - name: Test all-script syntax regression
+        run: ruby scripts/test_docker_validation.rb
+      - name: Prove runtime preflight rejects this public snapshot
+        shell: bash
+        run: |
+          if output=$(./scripts/validate-runtime-secrets.sh 2>&1); then
+            echo 'ERROR: publication fixtures were accepted as runtime secrets' >&2
+            exit 1
+          fi
+          printf '%s\n' "$output" | grep -q 'publication fixture is not deployable'
+          echo 'Expected rejection: publication fixtures are not deployable'
+      - name: Scan checked-out files with Gitleaks 8.30.1
+        shell: bash
+        run: |
+          set -euo pipefail
+          tools=$(mktemp -d)
+          curl --fail --location --silent --show-error \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz \
+            -o "$tools/gitleaks.tar.gz"
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  $tools/gitleaks.tar.gz" | sha256sum --check
+          tar -xzf "$tools/gitleaks.tar.gz" -C "$tools" gitleaks
+          "$tools/gitleaks" dir --redact=100 --no-banner .

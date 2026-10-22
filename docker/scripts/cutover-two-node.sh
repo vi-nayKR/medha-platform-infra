@@ -6,9 +6,11 @@ set -euo pipefail
   exit 64
 }
 
-worker=medha-worker@10.0.0.10
-ssh_opts=(-i /home/medha-storage/.ssh/id_ed25519 -o BatchMode=yes \
-  -o UserKnownHostsFile=/home/medha-storage/.ssh/known_hosts)
+# Historical operator procedure, not an executable public quickstart.
+worker="${MEDHA_WORKER_SSH_TARGET:?Set the privately managed worker SSH target}"
+ssh_opts=(-i "${MEDHA_SSH_IDENTITY:?Set the private SSH identity path}" -o BatchMode=yes \
+  -o StrictHostKeyChecking=yes \
+  -o "UserKnownHostsFile=${MEDHA_SSH_KNOWN_HOSTS:?Set the verified known-hosts path}")
 old_container=medha
 switched_storage=false
 completed=false
