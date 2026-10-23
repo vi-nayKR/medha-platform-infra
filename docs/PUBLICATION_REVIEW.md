@@ -72,3 +72,13 @@ No live cluster, Cloudflare API, SSH host, database, storage service or credenti
 | `git diff --check` and diff checks on Argo/base/Kustomization policy paths | Pass, exit 0; production policies unchanged |
 
 Kustomize 5.7.1, Actionlint 1.7.7 and checksum-verified Gitleaks 8.30.1 were temporary tools. No provider initialization, live credential test, historical erasure, migration or full ShellCheck run was performed.
+
+## Technical branch review — 2026-10-23
+
+Re-ran `./scripts/validate.sh` with Kustomize 5.7.1 available: pass, exit 0. The secret tests reported 11 runs/342 assertions; Docker validation reported 1 run/3 assertions, all without failures. All four explicit `kustomize build` targets (`kubernetes/overlays/dev`, `kubernetes/overlays/prod`, `platform`, `argocd`) rendered offline, exit 0. Active-workflow Actionlint passed with optional ShellCheck/Pyflakes subprocesses disabled. `validate-runtime-secrets.sh` correctly rejected publication fixtures with exit 1. Terraform formatting/provider validation remains explicitly skipped because Terraform is unavailable.
+
+Accessible GitHub webhook inventories were empty for both public Medha repositories. Active public workflows are validation-only; historical deployment workflows remain inactive. These point-in-time observations rule out the inspected webhook/workflow triggers, **not** external GitOps polling.
+
+The retained Argo examples still include automatic sync and public-repository `main` references. A secret-shape validator is not an Argo admission gate: syncing publication sentinels could replace working resources even though those sentinels cannot decrypt. Consequently, passing CI is **not sufficient evidence that merging cannot trigger deployment**. No controller was reconfigured, no policy example was silently disabled, and no main merge was performed.
+
+Decision: technical/offline review passed; **merge/publication approval remains withheld** until external-controller source wiring and upstream publication rights are established. This review does not impersonate a rights holder's legal consent or claim that an unobserved controller cannot exist. Existing attribution and licensing were preserved.
