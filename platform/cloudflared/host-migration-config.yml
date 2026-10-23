@@ -2,8 +2,9 @@
 # tunnel, currently running on medha-storage. Keep dev routed to the API only
 # until all clients use api-dev; then delete the dev rule and attach
 # dev.medha.dev to the web Worker. The catch-all rule must remain last.
-tunnel: bba72ac3-3cdb-4d95-9bbf-f1884f4b79e9
-credentials-file: /etc/cloudflared/bba72ac3-3cdb-4d95-9bbf-f1884f4b79e9.json
+# Illustrative identifier only; supply a privately managed tunnel and credentials.
+tunnel: 00000000-0000-4000-8000-000000000000
+credentials-file: /etc/cloudflared/00000000-0000-4000-8000-000000000000.json
 ingress:
   - hostname: api.medha.dev
     service: http://localhost:80

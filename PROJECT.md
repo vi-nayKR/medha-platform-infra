@@ -1,32 +1,17 @@
-# Medha infrastructure project
+# Medha infrastructure reference
 
-## Active runtime
+## Public snapshot boundary
 
-The live runtime is a two-node, systemd-managed Docker deployment. Storage (`10.0.0.20`) owns
-Cloudflared, Nginx, SeaweedFS and backups; worker (`10.0.0.10`) owns both APIs, PostgreSQL and
-Redis. See `docs/two-node-docker.md`. The Kubernetes definitions below are retained as historical
-desired-state material and are not applied to the current hosts.
+This repository is an offline portfolio/reference derivative, not the private operational source. All SealedSecrets contain non-deployable publication sentinels. No claim about current live health follows from the files here. See [publication review](docs/PUBLICATION_REVIEW.md).
 
-## Environments
+## Documented later design
 
-`dev` and `prod` are separate Kubernetes namespaces rendered from one Kustomize
-base. Only overlay values, image tags, replica policy, storage and encrypted
-secret material differ. Runtime environment selection is explicit for the backend;
-branch or hostname sniffing inside the API application is prohibited. For static
-frontend bundles, dynamic runtime hostname sniffing is used to select the API backend.
+The dated two-node Docker runbook separates storage/edge and worker/data roles. It records an intended migration and rollback procedure, not independently verified current state. Historical SSH/cutover procedures must not be run from this checkout.
 
-## Delivery
+## Historical Kubernetes design
 
-1. An application commit passes tests and builds an immutable image.
-2. The API workflow updates only the matching overlay image tag in this repo.
-3. Argo CD detects that Git commit and reconciles the matching namespace.
-4. Cloudflared sends allowed public hostnames to Traefik; Traefik selects the
-   namespace-specific Ingress by `Host`.
-5. NetworkPolicies allow backend-to-data traffic and block cross-namespace data
-   access by default.
+The Kubernetes examples retain dev/prod overlays from one shared base, namespace isolation, image references, and workload-specific Argo CD policies. These are preserved for architecture review, not a live reconciliation target. Ordinary Argo sync/self-heal is not an automatic canary/rollback controller.
 
-Production image changes require the GitHub `prod` environment approval. Argo
-CD self-heals drift, and production admin/console endpoints require Cloudflare
-Access authentication.
+## Offline checks
 
-See `docs/domains-and-naming.md`, `docs/migration.md`, and `docs/secrets.md`.
+Run `./scripts/validate.sh`. Publication fixtures should pass structural checks; `./scripts/validate-runtime-secrets.sh` must reject them. Optional missing tools are reported as skips. No publication check applies infrastructure or verifies deployment readiness.

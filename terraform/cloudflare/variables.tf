@@ -13,8 +13,8 @@ variable "zone_id" {
 }
 
 variable "tunnel_id" {
-  type    = string
-  default = "bba72ac3-3cdb-4d95-9bbf-f1884f4b79e9"
+  type        = string
+  description = "Operator-supplied tunnel ID; this public reference has no environment default."
 }
 
 variable "access_emails" {

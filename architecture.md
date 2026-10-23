@@ -1,5 +1,7 @@
 # Medha infrastructure architecture
 
+> **Historical Kubernetes reference.** The diagram and policies below describe retained manifests, not verified current runtime. A later two-node Docker design is documented in [two-node-docker.md](docs/two-node-docker.md). This public checkout has non-deployable secret fixtures; see [publication review](docs/PUBLICATION_REVIEW.md). Validation is offline and does not gate an external live controller automatically.
+
 **Scope.** This document describes the infrastructure *as built* — cluster topology, manifest
 layout, traffic path, and delivery pipeline. For *why* it's designed this way (goals, trade-offs,
 quality attributes, failure modes), see [`system_design.md`](./system_design.md). For conventions,
@@ -213,12 +215,8 @@ already gate operator entry points (`ssh-master`/`ssh-worker`/`ssh-storage`).
 
 ## Validate before every change
 
-- `./scripts/validate.sh` — offline consistency checks; in CI, also renders
-  both Kustomize overlays and validates the Terraform module.
-- `./scripts/validate-runtime-secrets.sh` — run before syncing an
-  environment; fails closed if a required SealedSecret key is absent (e.g.
-  the retained legacy prod ciphertext currently fails until it's re-sealed
-  with a `credentials-encryption-key`).
+- `./scripts/validate.sh` — publication fixtures, YAML/reference contracts and script tests. Kustomize/provider checks run only when their tools and initialization are available; skips are explicit.
+- `./scripts/validate-runtime-secrets.sh` — ciphertext-shape check that intentionally rejects this public checkout. Passing it elsewhere would not prove decryption or runtime readiness, and no external controller is automatically gated by this script.
 
 ## Further reading
 

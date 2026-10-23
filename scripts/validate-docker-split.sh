@@ -5,7 +5,9 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
 scripts=(docker/scripts/*.sh)
-bash -n "${scripts[@]}"
+for script in "${scripts[@]}"; do
+  bash -n "$script"
+done
 
 required=(
   docker/Dockerfile.split
@@ -36,4 +38,4 @@ if command -v shellcheck >/dev/null 2>&1; then
   shellcheck "${scripts[@]}" scripts/validate-docker-split.sh
 fi
 
-echo "two-node Docker deployment validation passed"
+echo "two-node Docker reference structure/syntax passed (not deployment readiness)"

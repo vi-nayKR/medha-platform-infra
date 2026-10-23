@@ -1,5 +1,7 @@
 # Medha infrastructure continuation handoff
 
+> **Historical context only.** The operational assertions, SSH examples and dates below are retained records, not verified current access instructions. This public reference must not be connected to live infrastructure. See [publication review](PUBLICATION_REVIEW.md).
+
 Last updated: 2026-07-18 (Asia/Kolkata), after the Cloudflare Access lockdown
 and the dev **and prod** namespace GitOps cutovers.
 

@@ -1,7 +1,9 @@
 <div align="center">
 
 # ⚙️ Medha Platform Infrastructure
-### Production Self-Hosted Kubernetes (k3s) · Argo CD GitOps · Zero-Trust Ingress · Multi-Tier Storage Topology
+### Public infrastructure reference · Two-node Docker design · Historical Kubernetes/GitOps manifests
+
+> **Not a deployment source.** All checked-in SealedSecrets contain explicit publication sentinels, not usable ciphertext. Do not apply or reconcile this checkout. See [publication review](docs/PUBLICATION_REVIEW.md) for historical exposure, owner actions and validation boundaries.
 
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-k3s%20v1.31-326CE5?style=flat-square&logo=kubernetes&logoColor=white)](https://k3s.io/)
 [![Argo CD](https://img.shields.io/badge/GitOps-Argo%20CD%20v2.13-EF6134?style=flat-square&logo=argo&logoColor=white)](https://argoproj.github.io/cd/)
@@ -11,7 +13,7 @@
 [![Reverse Proxy](https://img.shields.io/badge/Ingress-Traefik%20%2B%20Nginx-009639?style=flat-square&logo=nginx&logoColor=white)](https://traefik.io/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
 
-**The declarative GitOps and Infrastructure-as-Code (IaC) repository powering the Medha Platform across production and development environments.**
+**A public reference derivative of Medha infrastructure: a documented two-node Docker design and historical Kubernetes, Argo CD and Terraform examples. Live deployment state is not verified here.**
 
 [Architecture](#-infrastructure-architecture) • [GitOps Pipeline](#-declarative-gitops-workflow) • [Network & Security](#-network-topology--security-perimeter) • [Storage Architecture](#-storage-topology-seaweedfs) • [Contributors](#-contributors)
 
@@ -21,7 +23,9 @@
 
 ## 📌 Overview
 
-**Medha Platform Infrastructure** manages the full declarative lifecycle of the self-hosted Kubernetes cluster, edge networking, secrets encryption, object storage, and automated GitOps continuous delivery for the [Medha Platform API](https://github.com/vi-nayKR/medha-platform-api).
+**Medha Platform Infrastructure** preserves reference designs for edge networking, object storage and service deployment alongside the [Medha Platform API](https://github.com/vi-nayKR/medha-platform-api). The later [two-node Docker runbook](docs/two-node-docker.md) documents storage/edge and worker/data roles. The Kubernetes/GitOps diagram and policies below are historical examples, not proof of the current running topology.
+
+Offline checks: `./scripts/validate.sh`. Optional render/provider checks explicitly report skips when tools are absent. `./scripts/validate-runtime-secrets.sh` intentionally fails on this public snapshot. Passing publication checks is not deployment readiness.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
@@ -34,7 +38,7 @@
 
 ---
 
-## 🏛️ Infrastructure Architecture
+## 🏛️ Historical Kubernetes Architecture
 
 ```mermaid
 flowchart TD
@@ -88,7 +92,7 @@ flowchart TD
 
 ## 🚀 Declarative GitOps Workflow (Argo CD + Kustomize)
 
-All deployments are managed purely through GitOps pull reconciliation:
+The retained Kubernetes design used GitOps pull reconciliation. This diagram describes that design only; there is no deployment automation enabled by the public publication-check workflow:
 
 ```
 [ Developer Git Push ] ──► [ GitHub Actions CI ] ──► [ Build & Push Image (:5000) ]
@@ -102,7 +106,7 @@ All deployments are managed purely through GitOps pull reconciliation:
 
 1. **Environment Isolation:** Dev (`kubernetes/overlays/dev`) and Production (`kubernetes/overlays/prod`) utilize distinct namespaces, SealedSecrets encryption keys, and isolated resource quotas.
 2. **Deterministic Kustomize Overlays:** Image tags are pinned to exact immutable Git commit SHAs (`newTag: 327afe2`), preventing configuration drift.
-3. **Automated Rollbacks:** If readiness probes fail during canary rollout, Argo CD automatically pauses deployment and rolls back to the previous healthy replica set.
+3. **Rollback boundary:** The manifests define ordinary rolling updates and Argo CD reconciliation policies, not a canary controller or verified automatic rollback. Recovery requires an operator-reviewed image/data procedure; the historical Docker cutover trap is not proof of safe rollback after writes move.
 
 ---
 
@@ -110,7 +114,7 @@ All deployments are managed purely through GitOps pull reconciliation:
 
 - **Zero Inbound Open Ports:** The entire cluster communicates with the outside world strictly via outbound **Cloudflare Tunnels (`cloudflared`)**. No public IPv4/IPv6 ports are opened on local firewalls.
 - **Default-Deny NetworkPolicies:** Inter-pod communication is gated by Kubernetes `NetworkPolicy` rules. Pods in the `dev` namespace cannot address services in `prod`.
-- **SealedSecrets Encryption:** Sensitive credentials (database passwords, JWT signing keys, SMS provider tokens) are encrypted client-side using `kubeseal` and safe to store declaratively in Git.
+- **SealedSecrets reference:** Resource/key contracts are preserved, but every encrypted value is replaced by a non-deployable publication sentinel. Authorized operators must provision secrets outside this public derivative; the historical public certificate is not an approved current sealing target.
 
 ---
 

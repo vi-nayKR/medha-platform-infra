@@ -10,10 +10,7 @@ and commands, see [`AGENTS.md`](./AGENTS.md).
 
 ## 1. Goals & non-goals
 
-**Current state (2026-07-22):** the platform is deployed end to end in dev and production. Both
-backend overlays pin `db5827f`; backend and web production now auto-sync with prune/self-heal.
-Admin production remains manual-sync, and the only known active product polish is in
-`medha-ios`.
+**Historical Kubernetes design:** the policies below are retained examples, not assertions about current production state. A later two-node Docker procedure is recorded in `docs/two-node-docker.md`. This public snapshot contains non-deployable secret fixtures and must not be used as a reconciliation source. See [publication review](docs/PUBLICATION_REVIEW.md).
 
 **Goals**
 - Run the whole Medha platform on **one self-hosted cluster** cheaply, with clean `dev`/`prod`
@@ -80,10 +77,7 @@ backend initContainer runs ./medha-api -migrate before the main container starts
 - **No inbound surface.** The cluster opens no port; all public traffic arrives via the outbound
   Cloudflare Tunnel. Argo CD and raw Postgres/Redis have **no public hostname** — Argo is reached
   only through an SSH loopback tunnel (`scripts/argocd-local-access.sh`).
-- **Secrets never in plaintext.** API/DB/JWT/OTP/third-party keys are SealedSecrets (namespace-bound
-  ciphertext); the host-managed tunnel credentials stay on `medha-storage` and are never committed;
-  CI secrets live in GitHub, not here. `secrets/pub-cert.pem` (public) is what you seal against.
-  `validate-runtime-secrets.sh` fails closed if a required key is missing from the ciphertext.
+- **Public secret boundary.** This checkout supplies non-deployable sentinels, not credentials. Authorized operational sources provision secrets separately; the retained public certificate is historical, not an approved sealing target. `validate-runtime-secrets.sh` rejects fixtures and malformed envelopes but does not establish decryption, credentials or live readiness.
 - **Namespace isolation as the security boundary.** Default-deny NetworkPolicy means a `dev` pod
   can't resolve or reach `prod`'s data plane; only Traefik may reach a backend, and only a backend
   (plus the public S3 API path) may reach the data services.
@@ -106,17 +100,13 @@ backend initContainer runs ./medha-api -migrate before the main container starts
     cluster itself keeps running.
   - A storage node lost → that namespace's Postgres/Redis/SeaweedFS is unavailable until the node/disk
     returns; no automatic failover (single-node ceiling above).
-  - SealedSecret missing a required key → `validate-runtime-secrets.sh` blocks the sync rather than
-    booting a half-configured backend.
-  - `latest`/unpinned image or a hostname mismatch → caught by `validate.sh` /
-    `validate-env-contract.sh` before merge, not in production.
+  - Missing/placeholder/malformed secret data → preflight rejects it; a live deployment source must explicitly wire that check into its own workflow. This public repository does not block an external sync automatically.
+  - Image pinning and hostname agreement require explicit policy/contract review. Basic publication validation does not prove every image or cross-repository hostname invariant.
 
 ## 7. Change safety & validation
 
 The design assumes changes are proposed by people (and agents) without live cluster access, so
-**offline validation is the primary guard**: `validate.sh` (renders both overlays + validates
-Terraform), `validate-runtime-secrets.sh` (fail-closed secret gate), and `validate-env-contract.sh`
-(hostname/env agreement across sibling repos). Production policy is workload-specific: backend is
+**offline validation is a limited guard**: `validate.sh` checks publication/reference contracts and reports optional rendering/provider skips; `validate-runtime-secrets.sh` must fail on this checkout; `validate-env-contract.sh` needs sibling repositories. None proves live readiness or is automatically a live sync gate. Production policy is workload-specific: backend is
 automated/self-healing, web is automated/self-healing, while admin retains manual approval. The shared safety nets are
 validation, pinned revisions, review, and explicit Argo policy.
 
